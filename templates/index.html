@@ -1,208 +1,430 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <title>Crop Price Forecast</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Tailwind -->
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#0f766e',
-            secondary: '#164e63',
-            accent: '#5eead4',
-          },
-        },
-      }
-    }
-  </script>
-
+    <meta charset="UTF-8">
+    <title>Terra Tech AI | Predictive Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #ffffff; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glow:hover { box-shadow: 0 0 20px rgba(94, 234, 212, 0.2); border-color: rgba(94, 234, 212, 0.5); }
+        .neon-text { background: linear-gradient(135deg, #5eead4, #3b82f6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .neon-gradient { background: linear-gradient(135deg, rgba(94,234,212,0.1) 0%, rgba(59,130,246,0.1) 100%); }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        /* Smooth height transition wrapper */
+        .content-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#050505',
+                        primary: '#14b8a6', // Teal 500
+                        secondary: '#3b82f6', // Blue 500
+                        accent: '#5eead4', // Teal 300
+                        surface: '#121212',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
+<body class="antialiased bg-dark text-gray-200 relative overflow-x-hidden">
 
-<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen text-gray-800">
+    <!-- Ambient Background Glows -->
+    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-600/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
-  <div class="max-w-7xl mx-auto p-6 space-y-10">
+    <!-- Main Centered Wrapper -->
+    <div class="content-wrapper justify-center py-10 px-4 sm:px-6 lg:px-8 relative z-10 w-full max-w-7xl mx-auto">
+        
+        <!-- App Header (Centered) -->
+        <div class="text-center mb-10 transition-all duration-500">
+            <div class="inline-flex items-center justify-center gap-4 mb-4">
+                <div class="p-3 bg-teal-500/10 rounded-2xl border border-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.2)]">
+                    <i data-lucide="sprout" class="text-teal-400 w-10 h-10"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight neon-text">Terra Tech</h1>
+            </div>
+            <p class="text-gray-400 text-sm md:text-base font-medium max-w-xl mx-auto">
+                Advanced crop price simulation and predictive analytics engine.
+            </p>
+            
+            <!-- Global Alerts -->
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+                {% if message %}
+                <span class="px-4 py-2 rounded-full bg-teal-500/10 text-teal-400 text-sm font-medium border border-teal-500/20 flex items-center gap-2 shadow-lg shadow-teal-500/10">
+                    <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                    {{ message }}
+                </span>
+                {% endif %}
+                {% if metrics %}
+                <span class="px-4 py-2 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium border border-blue-500/20 shadow-lg shadow-blue-500/10">
+                    {{ metrics }}
+                </span>
+                {% endif %}
+                {% if error %}
+                <span class="px-4 py-2 rounded-full bg-red-500/10 text-red-400 text-sm font-medium border border-red-500/20 shadow-lg shadow-red-500/10">
+                    <i data-lucide="alert-circle" class="w-4 h-4 inline mr-1"></i> {{ error }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
 
-```
-<!-- HEADER -->
-<header class="text-center">
-  <h1 class="text-4xl font-extrabold text-primary mb-2">🌾 Crop Price Forecast</h1>
-  <p class="text-gray-600 text-lg">AI-powered crop price prediction dashboard</p>
-</header>
+        <!-- Action Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl mx-auto mb-10">
+            <!-- Training Card -->
+            <div class="glass p-8 rounded-[2rem] glow transition-all duration-300 relative overflow-hidden group">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all z-0"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="p-3 rounded-2xl bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                            <i data-lucide="cpu" class="w-6 h-6"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-white tracking-wide">Model Training Engine</h2>
+                    </div>
+                    <form action="/train" method="POST" enctype="multipart/form-data" class="flex flex-col gap-5">
+                        <div class="relative w-full">
+                            <input type="file" name="csv_file" required class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="document.getElementById('fileNameSpan').textContent = this.files.length > 0 ? this.files[0].name : 'Upload Market Dataset (CSV)'; document.getElementById('fileNameSpan').classList.add('text-blue-400');">
+                            <div class="w-full h-14 bg-white/5 border border-white/10 px-5 rounded-2xl text-gray-400 flex items-center justify-between group-hover:bg-white/10 transition-colors">
+                                <span id="fileNameSpan" class="font-medium truncate">Upload Market Dataset (CSV)</span>
+                                <i data-lucide="upload-cloud" class="w-5 h-5 text-gray-500 group-hover:text-blue-400 transition-colors"></i>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <select name="model_type" class="flex-1 bg-white/5 border border-white/10 px-5 rounded-2xl text-white font-medium focus:outline-none focus:border-blue-500/50 appearance-none h-14 cursor-pointer">
+                                <option value="lstm" class="bg-surface">LSTM Sequence</option>
+                                <option value="xgboost" class="bg-surface">XGBoost Grid</option>
+                                <option value="hybrid" selected class="bg-surface">Hybrid NeuralNet</option>
+                            </select>
+                            <button type="submit" class="h-14 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 rounded-2xl transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] flex justify-center items-center gap-2">
+                                <span>Compile</span>
+                                <i data-lucide="settings-2" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
-<!-- TOP SECTION -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Forecasting Card -->
+            <div class="glass p-8 rounded-[2rem] glow transition-all duration-300 relative overflow-hidden group">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all z-0"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="p-3 rounded-2xl bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+                            <i data-lucide="sparkles" class="w-6 h-6"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-white tracking-wide">AI Forecasting Engine</h2>
+                    </div>
+                    <form action="/predict" method="POST" class="flex flex-col gap-5">
+                        <div class="relative w-full h-14">
+                            <i data-lucide="calendar-clock" class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                            <input type="number" name="days" placeholder="Forecast horizon (in days)" class="w-full h-full bg-white/5 border border-white/10 pl-14 pr-5 rounded-2xl text-white font-medium focus:outline-none focus:border-purple-500/50 placeholder-gray-500 transition-colors">
+                        </div>
+                        <button type="submit" class="w-full h-14 bg-purple-600 hover:bg-purple-500 text-white font-bold px-8 rounded-2xl transition-all hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] flex justify-center items-center gap-2">
+                            <span>Execute Simulation</span>
+                            <i data-lucide="zap" class="w-5 h-5 fill-white"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-  <!-- Upload -->
-  <section class="bg-white shadow-lg rounded-xl p-6 border hover:shadow-xl transition">
-    <h2 class="text-xl font-bold text-secondary mb-4">📂 Upload CSV</h2>
+        {% if forecast_table %}
+        
+        <!-- Divider -->
+        <div class="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-10 max-w-5xl mx-auto"></div>
 
-    <form action="/train" method="POST" enctype="multipart/form-data" class="space-y-4">
-      <input type="file" name="csv_file" required class="w-full px-4 py-2 border rounded-md">
+        <div class="w-full max-w-6xl mx-auto space-y-8 animate-fade-in-up">
+            <!-- Summary Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Max Price -->
+                <div class="glass p-6 rounded-3xl relative overflow-hidden group border-t-2 border-t-teal-400/50">
+                    <div class="absolute -right-6 -top-6 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl group-hover:bg-teal-500/20 transition-all"></div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">Peak Forecast</p>
+                            <h3 class="text-4xl font-black text-white tracking-tight">₹{{ forecast_table | map(attribute=1) | max | round(2) }}</h3>
+                        </div>
+                        <div class="p-4 bg-teal-500/10 rounded-2xl text-teal-400 shadow-[0_0_15px_rgba(20,184,166,0.1)]">
+                            <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
 
-      <select name="model_type" class="w-full px-4 py-2 border rounded-md">
-        <option value="lstm">LSTM</option>
-        <option value="xgboost">XGBoost</option>
-        <option value="hybrid" selected>Hybrid</option>
-      </select>
+                <!-- Min Price -->
+                <div class="glass p-6 rounded-3xl relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">Lowest Dip</p>
+                            <h3 class="text-4xl font-black text-white tracking-tight">₹{{ forecast_table | map(attribute=1) | min | round(2) }}</h3>
+                        </div>
+                        <div class="p-4 bg-blue-500/10 rounded-2xl text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                            <i data-lucide="arrow-down-right" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
 
-      <button type="submit"
-        class="w-full bg-primary text-white py-2 rounded-lg hover:scale-105 transition">
-        Train Model
-      </button>
-    </form>
-  </section>
+                <!-- Avg Price -->
+                <div class="glass p-6 rounded-3xl relative overflow-hidden group">
+                    <div class="absolute -right-6 -top-6 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <div>
+                            <p class="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">Market Average</p>
+                            <h3 class="text-4xl font-black text-white tracking-tight">₹{{ (forecast_table | map(attribute=1) | sum / forecast_table|length) | round(2) }}</h3>
+                        </div>
+                        <div class="p-4 bg-purple-500/10 rounded-2xl text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                            <i data-lucide="activity" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  <!-- Predict -->
-  <section class="bg-white shadow-lg rounded-xl p-6 border hover:shadow-xl transition">
-    <h2 class="text-xl font-bold text-secondary mb-4">📈 Predict</h2>
+            <!-- Chart and Table Section -->
+            <div class="grid grid-cols-1 xl:grid-cols-5 gap-8">
+                
+                <!-- Interactive Chart Area (Takes 3 columns) -->
+                <div class="xl:col-span-3 glass rounded-3xl flex flex-col glow transition-all duration-300 overflow-hidden">
+                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-xl bg-teal-500/10 text-teal-400">
+                                <i data-lucide="line-chart" class="w-5 h-5"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white tracking-wide">Price Trajectory Analysis</h3>
+                        </div>
+                        <div class="bg-teal-500/10 text-teal-300 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-teal-500/20">
+                            Live Data
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 bg-gradient-to-b from-transparent to-black/40 relative min-h-[400px]">
+                        <canvas id="forecastChart" class="w-full h-full"></canvas>
+                        <!-- Fallback image hidden but kept for reference if chart.js fails -->
+                        <img id="fallbackImg" src="{{ graph_url }}" alt="Graph Fallback" class="hidden w-full h-full object-contain rounded opacity-50 absolute inset-0 mix-blend-screen pointer-events-none">
+                    </div>
+                </div>
 
-    <form action="/predict" method="POST" class="space-y-4">
-      <input type="number" name="days" placeholder="Enter forecast days"
-        class="w-full px-4 py-2 border rounded-md">
+                <!-- Right Column (Takes 2 Columns) -->
+                <div class="xl:col-span-2 flex flex-col gap-8">
+                    
+                    <!-- Insight Box -->
+                    <div class="glass rounded-3xl p-6 relative overflow-hidden glow border-t-2 border-t-purple-500/30">
+                        <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl z-0"></div>
+                        <div class="relative z-10 flex gap-4">
+                            <div class="p-3 rounded-2xl bg-purple-500/10 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)] h-fit shrink-0">
+                                <i data-lucide="bot" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-purple-400 tracking-widest uppercase mb-2">AI Agent Insight</h4>
+                                <p class="text-gray-300 leading-relaxed font-medium">
+                                    {{ summary_recommendation }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-      <button type="submit"
-        class="w-full bg-green-600 text-white py-2 rounded-lg hover:scale-105 transition">
-        Forecast
-      </button>
-    </form>
-  </section>
+                    <!-- Modern Table -->
+                    <div class="glass rounded-3xl flex flex-col glow transition-all duration-300 overflow-hidden flex-1 max-h-[400px]">
+                        <div class="p-6 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
+                            <i data-lucide="list-tree" class="w-5 h-5 text-gray-400"></i>
+                            <h3 class="text-base font-bold text-white tracking-wide">Projected Data Log</h3>
+                        </div>
+                        <div class="flex-1 overflow-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-[10px] font-bold text-gray-500 tracking-widest uppercase sticky top-0 bg-[#0a0a0a]/90 backdrop-blur-md z-10">
+                                        <th class="py-4 px-6">Timeline</th>
+                                        <th class="py-4 px-6 text-right">Valuation</th>
+                                        <th class="py-4 px-6 text-right">Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm font-medium">
+                                    {% for date, price in forecast_table %}
+                                    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                                        <td class="py-4 px-6 text-gray-400">{{ date }}</td>
+                                        <td class="py-4 px-6 text-right text-gray-200">
+                                            ₹{{ price | round(2) }}
+                                        </td>
+                                        <td class="py-4 px-6 text-right">
+                                            {% set prev_price = forecast_table[loop.index0 - 1][1] if loop.index0 > 0 else forecast_table[loop.index0][1] %}
+                                            {% set diff = price - prev_price %}
+                                            {% if diff > 0 %}
+                                                <span class="text-teal-400 bg-teal-400/10 px-2 py-1 rounded text-xs font-bold">+{{ diff|round(1) }}</span>
+                                            {% elif diff < 0 %}
+                                                <span class="text-red-400 bg-red-400/10 px-2 py-1 rounded text-xs font-bold">{{ diff|round(1) }}</span>
+                                            {% else %}
+                                                <span class="text-gray-500 bg-gray-500/10 px-2 py-1 rounded text-xs font-bold">0.0</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-  <!-- Download -->
-  <section class="bg-white shadow-lg rounded-xl p-6 border hover:shadow-xl transition flex flex-col justify-between">
-    <h2 class="text-xl font-bold text-secondary mb-4">📥 Data</h2>
+                </div>
+            </div>
 
-    <form action="/download-data" method="GET">
-      <button type="submit"
-        class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:scale-105 transition">
-        Download CSV
-      </button>
-    </form>
-  </section>
+            <!-- Full Width Recommendations Table -->
+            <div class="glass rounded-3xl glow transition-all duration-300 overflow-hidden mt-8">
+                <div class="p-6 border-b border-white/5 bg-gradient-to-r from-blue-900/20 to-transparent flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 rounded-2xl bg-blue-500/10 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                            <i data-lucide="shield-check" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white tracking-wide">Strategic Recommendations</h3>
+                            <p class="text-xs font-medium text-gray-400 mt-1">Actionable intelligence for all market stakeholders</p>
+                        </div>
+                    </div>
+                    <a href="/download-data" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-medium text-white transition-colors border border-white/10">
+                        <i data-lucide="downloadCloud" class="w-4 h-4"></i> Export CSV
+                    </a>
+                </div>
+                <div class="p-0 overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
+                        <thead>
+                            <tr class="text-[10px] font-bold text-gray-500 tracking-widest uppercase bg-black/40">
+                                <th class="py-5 px-6">Timeline</th>
+                                <th class="py-5 px-6">Farmer / Seller Directive</th>
+                                <th class="py-5 px-6">Consumer Advice</th>
+                                <th class="py-5 px-6">Policy Monitor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-medium divide-y divide-white/5">
+                            {% for i in range(forecast_table|length) %}
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="py-5 px-6 text-gray-400 whitespace-nowrap">
+                                    <span class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">{{ forecast_table[i][0] }}</span>
+                                </td>
+                                <td class="py-5 px-6">
+                                    <div class="flex items-center gap-3 text-gray-300">
+                                        <div class="p-1.5 rounded-md bg-teal-500/10 text-teal-400 shrink-0"><i data-lucide="tractor" class="w-4 h-4"></i></div>
+                                        <span>{{ farmer_seller_recommendations[i].farmer_seller_action }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-5 px-6">
+                                    <div class="flex items-center gap-3 text-gray-300">
+                                        <div class="p-1.5 rounded-md bg-blue-500/10 text-blue-400 shrink-0"><i data-lucide="shopping-cart" class="w-4 h-4"></i></div>
+                                        <span>{{ consumer_recommendations[i].consumer_action }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-5 px-6">
+                                    <div class="flex items-center gap-3 text-gray-300">
+                                        <div class="p-1.5 rounded-md bg-purple-500/10 text-purple-400 shrink-0"><i data-lucide="landmark" class="w-4 h-4"></i></div>
+                                        <span>{{ government_recommendations[i].government_action }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-</div>
+        {% endif %}
 
-{% if forecast_table %}
-
-<!-- GRAPH + TABLE -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-  <!-- GRAPH -->
-  <div class="md:col-span-2 bg-white shadow-lg rounded-xl p-6 border hover:shadow-xl transition">
-    <h3 class="text-xl font-bold mb-4 text-secondary">📊 Price Forecast</h3>
-    <img src="{{ graph_url }}" class="w-full h-[350px] object-contain rounded">
-  </div>
-
-  <!-- TABLE -->
-  <div class="bg-white shadow-lg rounded-xl p-6 border hover:shadow-xl transition">
-    <h3 class="text-xl font-bold mb-4 text-secondary">📋 Forecast Table</h3>
-
-    <div class="overflow-y-auto max-h-[350px]">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-200 sticky top-0">
-          <tr>
-            <th class="px-4 py-2">Date</th>
-            <th class="px-4 py-2">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for date, price in forecast_table %}
-          <tr class="border-t hover:bg-slate-50">
-            <td class="px-4 py-2">{{ date }}</td>
-            <td class="px-4 py-2 font-semibold text-green-600">
-              ₹{{ price | round(2) }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        </div>
+        
+        <!-- Subtle Footer -->
+        <div class="mt-auto py-8 text-center flex flex-col items-center opacity-30">
+            <i data-lucide="satellite" class="w-5 h-5 mb-2"></i>
+            <p class="text-[10px] font-bold tracking-[0.2em] text-white uppercase">System Integrity Stable</p>
+        </div>
     </div>
-  </div>
 
-</div>
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
 
-<!-- SUMMARY -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        {% if forecast_table %}
+        const chartDates = [{% for d, p in forecast_table %} "{{ d }}", {% endfor %}];
+        const chartPrices = [{% for d, p in forecast_table %} {{ p | round(2) }}, {% endfor %}];
 
-  <div class="bg-green-100 p-5 rounded-xl shadow text-center">
-    <h4 class="text-lg font-semibold">📈 Max Price</h4>
-    <p class="text-2xl font-bold text-green-700">
-      ₹{{ forecast_table | map(attribute=1) | max | round(2) }}
-    </p>
-  </div>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('forecastChart');
+            if (ctx && typeof Chart !== 'undefined') {
+                const chartCanvas = ctx.getContext('2d');
+                const gradient = chartCanvas.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(20, 184, 166, 0.4)'); 
+                gradient.addColorStop(1, 'rgba(20, 184, 166, 0.0)'); 
 
-  <div class="bg-blue-100 p-5 rounded-xl shadow text-center">
-    <h4 class="text-lg font-semibold">📉 Min Price</h4>
-    <p class="text-2xl font-bold text-blue-700">
-      ₹{{ forecast_table | map(attribute=1) | min | round(2) }}
-    </p>
-  </div>
+                Chart.defaults.color = "rgba(255, 255, 255, 0.5)";
+                Chart.defaults.font.family = "'Inter', sans-serif";
 
-  <div class="bg-purple-100 p-5 rounded-xl shadow text-center">
-    <h4 class="text-lg font-semibold">📊 Avg Price</h4>
-    <p class="text-2xl font-bold text-purple-700">
-      ₹{{ (forecast_table | map(attribute=1) | sum / forecast_table|length) | round(2) }}
-    </p>
-  </div>
-
-</div>
-
-<!-- RECOMMENDATIONS -->
-<div class="mt-6 bg-white shadow-lg rounded-xl p-6 border hover:shadow-xl transition">
-  <h3 class="text-xl font-bold mb-4 text-secondary">🧭 Daily Recommendations</h3>
-
-  <div class="overflow-x-auto">
-    <table class="min-w-full text-sm">
-      <thead class="bg-slate-200">
-        <tr>
-          <th class="px-4 py-2">Date</th>
-          <th class="px-4 py-2">Farmer</th>
-          <th class="px-4 py-2">Consumer</th>
-          <th class="px-4 py-2">Government</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for i in range(forecast_table|length) %}
-        <tr class="border-t hover:bg-slate-50">
-          <td class="px-4 py-2">{{ forecast_table[i][0] }}</td>
-          <td class="px-4 py-2">{{ farmer_seller_recommendations[i].farmer_seller_action }}</td>
-          <td class="px-4 py-2">{{ consumer_recommendations[i].consumer_action }}</td>
-          <td class="px-4 py-2">{{ government_recommendations[i].government_action }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-
-    </table>
-  </div>
-</div>
-
-{% endif %}
-
-<!-- MESSAGES -->
-<div class="text-center">
-  {% if message %}
-  <p class="text-green-600 font-semibold">✔ {{ message }}</p>
-  {% endif %}
-
-  {% if metrics %}
-  <p class="text-blue-600 font-semibold">📊 {{ metrics }}</p>
-  {% endif %}
-
-  {% if error %}
-  <p class="text-red-600 font-semibold">❌ {{ error }}</p>
-  {% endif %}
-</div>
-```
-
-  </div>
-
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartDates,
+                        datasets: [{
+                            label: 'Valuation',
+                            data: chartPrices,
+                            borderColor: '#14b8a6', 
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#050505',
+                            pointBorderColor: '#5eead4', 
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#5eead4',
+                            fill: true,
+                            tension: 0.4 
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(12, 12, 12, 0.95)',
+                                titleColor: '#fff',
+                                bodyColor: '#5eead4',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                padding: 14,
+                                displayColors: false,
+                                titleFont: { size: 13, weight: 'bold' },
+                                bodyFont: { size: 16, weight: 'bold' },
+                                callbacks: { label: function(context) { return '₹' + context.parsed.y; } }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false, drawBorder: false },
+                                ticks: { maxTicksLimit: 8, color: 'rgba(255, 255, 255, 0.4)', font: {weight: '500'} }
+                            },
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.03)', drawBorder: false },
+                                border: { display: false },
+                                ticks: {
+                                    font: {weight: '500'},
+                                    callback: function(value) { return '₹' + value; },
+                                    color: 'rgba(255, 255, 255, 0.4)'
+                                }
+                            }
+                        }
+                    });
+            }
+        });
+        {% endif %}
+    </script>
 </body>
 </html>

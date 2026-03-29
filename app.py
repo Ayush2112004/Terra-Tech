@@ -42,6 +42,12 @@ def predict():
         future_dates = []
         future_values = []
         last_known_date = df['date'].max()
+        
+        # 🕒 Ensure forecast starts from the current date if the dataset is old
+        now = datetime.now()
+        today_midnight = datetime(now.year, now.month, now.day)
+        if last_known_date < today_midnight:
+            last_known_date = today_midnight - timedelta(days=1)
 
         if model_type in ['lstm', 'hybrid']:
             lstm_model = load_model(LSTM_MODEL_PATH, compile=False)
@@ -67,7 +73,7 @@ def predict():
                 diff_1 = lag_1 - lag_2
 
                 features = {
-                    "dayofweek": new_date.dayofweek,
+                    "dayofweek": new_date.weekday(),
                     "month": new_date.month,
                     "dayofyear": new_date.timetuple().tm_yday,
                     "lag_1": lag_1,
